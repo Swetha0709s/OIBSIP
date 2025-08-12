@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Temperature Converter</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;600&display=swap');
+
+    /* Reset */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      color: #fff;
+      user-select: none;
+    }
+
+    .converter {
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(15px);
+      border-radius: 20px;
+      padding: 40px 50px;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+      text-align: center;
+      box-sizing: border-box;
+    }
+
+    .converter h1 {
+      font-weight: 700;
+      margin-bottom: 30px;
+      text-shadow: 0 0 10px rgba(255,255,255,0.7);
+      letter-spacing: 2px;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 14px 20px;
+      border-radius: 10px;
+      border: none;
+      font-size: 1.2rem;
+      margin-bottom: 25px;
+      font-weight: 600;
+      text-align: center;
+      outline: none;
+      transition: box-shadow 0.3s ease;
+      color: #333;
+    }
+
+    input[type="text"]:focus {
+      box-shadow: 0 0 8px 3px #a18eff;
+    }
+
+    .unit-selection {
+      margin-bottom: 30px;
+      display: flex;
+      justify-content: space-around;
+    }
+
+    .unit-selection label {
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 1rem;
+      user-select: none;
+      padding: 6px 12px;
+      border-radius: 8px;
+      transition: background-color 0.3s ease, color 0.3s ease;
+      border: 2px solid transparent;
+    }
+
+    .unit-selection input[type="radio"] {
+      display: none;
+    }
+
+    /* Highlight selected label */
+    .unit-selection input[type="radio"]:checked + label {
+      background: #8a72ff;
+      color: white;
+      border-color: #6b50ff;
+      box-shadow: 0 0 8px #8a72ff;
+    }
+
+    button.convert-btn {
+      width: 100%;
+      padding: 15px 0;
+      border-radius: 12px;
+      border: none;
+      background: #6b50ff;
+      color: white;
+      font-size: 1.3rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 6px 15px rgba(107, 80, 255, 0.5);
+      transition: background 0.3s ease, transform 0.2s ease;
+      user-select: none;
+    }
+
+    button.convert-btn:hover {
+      background: #865fff;
+      transform: scale(1.05);
+    }
+
+    .output {
+      margin-top: 35px;
+      font-size: 1.7rem;
+      font-weight: 700;
+      text-shadow: 0 0 8px rgba(255,255,255,0.8);
+      min-height: 40px;
+      min-width: 200px;
+      color: #f1f1f1;
+    }
+
+    .error {
+      color: #ff6b6b;
+      font-weight: 600;
+      margin-top: 15px;
+      font-size: 1rem;
+      text-shadow: none;
+      min-height: 20px;
+    }
+
+    @media (max-width: 450px) {
+      .converter {
+        padding: 30px 25px;
+      }
+      button.convert-btn {
+        font-size: 1.1rem;
+        padding: 12px 0;
+      }
+      .output {
+        font-size: 1.4rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="converter" role="main" aria-label="Temperature converter">
+    <h1>Temp Converter</h1>
+
+    <input 
+      type="text" 
+      id="tempInput" 
+      aria-label="Enter temperature value" 
+      placeholder="Enter temperature" 
+      autocomplete="off" 
+    />
+
+    <div class="unit-selection" role="radiogroup" aria-labelledby="unitLabel">
+      <input type="radio" id="celsius" name="unit" value="celsius" checked />
+      <label for="celsius">Celsius (°C)</label>
+
+      <input type="radio" id="fahrenheit" name="unit" value="fahrenheit" />
+      <label for="fahrenheit">Fahrenheit (°F)</label>
+
+      <input type="radio" id="kelvin" name="unit" value="kelvin" />
+      <label for="kelvin">Kelvin (K)</label>
+    </div>
+
+    <button class="convert-btn" id="convertBtn" aria-label="Convert temperature">Convert</button>
+
+    <div class="error" id="errorMsg" role="alert" aria-live="assertive"></div>
+    <div class="output" id="output" aria-live="polite"></div>
+  </div>
+
+  <script>
+    const input = document.getElementById('tempInput');
+    const convertBtn = document.getElementById('convertBtn');
+    const errorMsg = document.getElementById('errorMsg');
+    const output = document.getElementById('output');
+
+    convertBtn.addEventListener('click', () => {
+      errorMsg.textContent = '';
+      output.textContent = '';
+
+      let tempValue = input.value.trim();
+      if (tempValue === '') {
+        errorMsg.textContent = 'Please enter a temperature value.';
+        return;
+      }
+
+      // Check if input is a valid number (allow decimal and negative)
+      if (!/^[-+]?\d*\.?\d+$/.test(tempValue)) {
+        errorMsg.textContent = 'Invalid input. Please enter a valid number.';
+        return;
+      }
+
+      const temp = parseFloat(tempValue);
+      const selectedUnit = document.querySelector('input[name="unit"]:checked').value;
+
+      let convertedTemp;
+      let convertedUnit;
+
+      if (selectedUnit === 'celsius') {
+        // Convert Celsius to Fahrenheit and Kelvin (show only one, or do 2 conversions?)
+        convertedTemp = (temp * 9/5) + 32;
+        convertedUnit = '°F';
+        output.textContent = `${temp.toFixed(2)} °C = ${convertedTemp.toFixed(2)} ${convertedUnit}`;
+      } else if (selectedUnit === 'fahrenheit') {
+        // Fahrenheit to Celsius
+        convertedTemp = (temp - 32) * 5/9;
+        convertedUnit = '°C';
+        output.textContent = `${temp.toFixed(2)} °F = ${convertedTemp.toFixed(2)} ${convertedUnit}`;
+      } else if (selectedUnit === 'kelvin') {
+        // Kelvin to Celsius
+        convertedTemp = temp - 273.15;
+        convertedUnit = '°C';
+        output.textContent = `${temp.toFixed(2)} K = ${convertedTemp.toFixed(2)} ${convertedUnit}`;
+      }
+    });
+
+    // Optional: Enter key triggers conversion
+    input.addEventListener('keypress', e => {
+      if (e.key === 'Enter') {
+        convertBtn.click();
+      }
+    });
+  </script>
+
+</body>
+</html>
